@@ -4,7 +4,7 @@ Unofficial implementation of [MLP-Mixer: An all-MLP Architecture for Vision](htt
 [official implementation](https://github.com/google-research/vision_transformer)
 
 # Overview
-![error](./img/mlp-mixer.png)
+![error](https://github.com/xmu-xiaoma666/MLP-Mixer-pytorch/edit/main/mlp-mixer.png)
 
 # Usage
 ```python
