@@ -5,7 +5,7 @@ class MlpBlock(nn.Module):
     def __init__(self,input_dim,mlp_dim=512) :
         super().__init__()
         self.fc1=nn.Linear(input_dim,mlp_dim)
-        self.gelu=nn.GlEU()
+        self.gelu=nn.GELU()
         self.fc2=nn.Linear(mlp_dim,input_dim)
     
     def forward(self,x):
@@ -14,10 +14,10 @@ class MlpBlock(nn.Module):
 
 
 
-class MixerBlock(nn.Module ):
+class MixerBlock(nn.Module):
     def __init__(self,tokens_mlp_dim=16,channels_mlp_dim=1024,tokens_hidden_dim=32,channels_hidden_dim=1024):
         super().__init__()
-        self.ln=nn.LayerNorm(tokens_mlp_dim)
+        self.ln=nn.LayerNorm(channels_mlp_dim)
         self.tokens_mlp_block=MlpBlock(tokens_mlp_dim,mlp_dim=tokens_hidden_dim)
         self.channels_mlp_block=MlpBlock(channels_mlp_dim,mlp_dim=channels_hidden_dim)
 
@@ -34,6 +34,7 @@ class MixerBlock(nn.Module ):
         y=x+y #(bs,tokens,channels)
         y=self.ln(y) #(bs,tokens,channels)
         y=x+self.channels_mlp_block(y) #(bs,tokens,channels)
+        return y
 
 class MlpMixer(nn.Module):
     def __init__(self,num_classes,num_blocks,patch_size,tokens_hidden_dim,channels_hidden_dim,tokens_mlp_dim,channels_mlp_dim):
@@ -44,16 +45,16 @@ class MlpMixer(nn.Module):
         self.tokens_mlp_dim=tokens_mlp_dim
         self.channels_mlp_dim=channels_mlp_dim
         self.embd=nn.Conv2d(3,channels_mlp_dim,kernel_size=patch_size,stride=patch_size) 
-        self.ln=nn.LayerNorm(tokens_mlp_dim)
+        self.ln=nn.LayerNorm(channels_mlp_dim)
         self.mlp_blocks=[]
         for _ in range(num_blocks):
-            self.mlp_blocks.appennd(MixerBlock(tokens_mlp_dim,channels_mlp_dim,tokens_hidden_dim,tokens_hidden_dim,channels_hidden_dim))
+            self.mlp_blocks.append(MixerBlock(tokens_mlp_dim,channels_mlp_dim,tokens_hidden_dim,channels_hidden_dim))
         self.fc=nn.Linear(channels_mlp_dim,num_classes)
 
     def forward(self,x):
-        y=self.embd(x) # bs,h,w,channels
-        bs,h,w,c=x.shape
-        y=y.view(bs,-1,c) # bs,tokens,channels
+        y=self.embd(x) # bs,channels,h,w
+        bs,c,h,w=y.shape
+        y=y.view(bs,c,-1).transpose(1,2) # bs,tokens,channels
 
         if(self.tokens_mlp_dim!=y.shape[1]):
             raise ValueError('Tokens_mlp_dim is not correct.')
@@ -69,7 +70,7 @@ class MlpMixer(nn.Module):
 
 if __name__ == '__main__':
     mlp_mixer=MlpMixer(num_classes=1000,num_blocks=10,patch_size=10,tokens_hidden_dim=32,channels_hidden_dim=1024,tokens_mlp_dim=16,channels_mlp_dim=1024)
-    input=torch.randn(50,40,40,3)
+    input=torch.randn(50,3,40,40)
     output=mlp_mixer(input)
     print(output.shape)
     
