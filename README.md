@@ -1,5 +1,5 @@
 # MLP-Mixer-pytorch
-Unofficial implementation of [MLP-Mixer: An all-MLP Architecture for Vision](https://arxiv.org/pdf/2105.01601.pdf)
+Unofficial pytorch implementation of [MLP-Mixer: An all-MLP Architecture for Vision](https://arxiv.org/pdf/2105.01601.pdf)
 
 [official implementation](https://github.com/google-research/vision_transformer)
 
